@@ -87,7 +87,9 @@ pattern = cake_hdf.find_by(query='pattern')
 fig, ax = plt.subplots()
 im = ax.imshow(pattern, cmap='jet', aspect='auto', origin='lower',
                extent=[tth_arr.min(), tth_arr.max(), frame_arr.min(), frame_arr.max()])
-plt.colorbar(im, ax=ax)
+plt.colorbar(im, ax=ax, label='Intensity (a.u.)')
+ax.set_xlabel('2θ (deg)')
+ax.set_ylabel('Time (frame)')
 st.pyplot(fig)
 del fig
 
@@ -105,7 +107,10 @@ im = ax.imshow(
     cmap='jet', aspect='auto', origin='lower',
     extent=[tth_arr.min(), tth_arr.max(), azi_arr.min(), azi_arr.max()]
 )
-plt.colorbar(im, ax=ax)
+plt.colorbar(im, ax=ax, label='Intensity (a.u.)')
+ax.set_xlabel('2θ (deg)')
+ax.set_ylabel('Azimuth (deg)')
+ax.set_title(f'Frame = {frame}')
 st.pyplot(fig)
 del fig
 
