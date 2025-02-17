@@ -57,7 +57,7 @@ st.write(f"*Update to?* : `{xrd_path}`")
 if st.button('更新', key='update_xrd_path', type='primary'):
     setting.update_setting(key='xrd_path', value=xrd_path)
     setting = setting_handler.Setting()
-st.write(f"*Selected file*: `{setting.setting_json['xrd_path']}`")
+st.write(f"*To be processed file*: `{setting.setting_json['xrd_path']}`")
 
 
 st.divider() # --------------------------------------------------------------------------------------------------------#
@@ -79,7 +79,7 @@ st.write(f"*Update to?* : `{poni_path}`")
 if st.button('更新', key='update_poni_path', type='primary'):
     setting.update_setting(key='poni_path', value=poni_path)
     setting = setting_handler.Setting()
-st.write(f"*Selected file*: `{setting.setting_json['poni_path']}`")
+st.write(f"*To be processed file*: `{setting.setting_json['poni_path']}`")
 
 
 st.divider() # --------------------------------------------------------------------------------------------------------#

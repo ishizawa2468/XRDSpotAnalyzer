@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 import h5py
-from pyFAI.azimuthalIntegrator import AzimuthalIntegrator
+import pyFAI
 from modules.HDF5 import HDF5Reader
 
 
@@ -16,6 +16,7 @@ class XRD:
         # ファイル別に処理
         if xrd_path.endswith('.hdf'):
             self.hdf = HDF5Reader(xrd_path)
+            # TODO: 少なくともframe数は必要。.nxs と同じ用に self.frame_num を設定
             raise NotImplementedError('実装中')
         elif xrd_path.endswith('.nxs'):
             self.nxs_path = xrd_path
@@ -26,12 +27,10 @@ class XRD:
             raise NotImplementedError('.nxs, .hdfのみが実装されています。')
         # 共通処理
         self.xrd_path = xrd_path # 保存しておく。他のメソッドで拡張子判断するときに使う
-        self._create_integrator() # AzimuthalIntegratorを作成する
+        self._create_integrator(poni_path) # AzimuthalIntegratorを作成する
         self.npt_tth = npt_tth
         self.npt_azi = npt_azi
-        # poniとmaskの設定(maskはなくても良い)
-        if poni_path is not None:
-            self.set_poni(poni_path=poni_path)
+        # maskの設定(なくても良い)
         if mask_path is not None:
             self.set_mask(mask_path=mask_path)
 
@@ -56,9 +55,8 @@ class XRD:
 
 
     """ 共通 """
-    def _create_integrator(self):
-        ai = AzimuthalIntegrator()
-        self.ai = ai
+    def _create_integrator(self, poni_path):
+        self.ai = pyFAI.load(poni_path)
 
     """ 共通 """
     def set_poni(self, *, poni_path=None):

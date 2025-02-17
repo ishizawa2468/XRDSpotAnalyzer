@@ -7,14 +7,17 @@ class HDF5():
     SUPPORTED_FILE_TYPES = ['.hdf5', '.hdf', '.h5', '.nxs'] # 有効な拡張子を示すクラス変数
 
     def __init__(self, file_path):
+        # ファイルpath文字列の拡張子をチェック
         if any(file_path.endswith(ext) for ext in self.SUPPORTED_FILE_TYPES):
             self.file_path = file_path
             # ファイルが存在すれば、ファイル内のpath構造を設定する。
             if os.path.exists(file_path):
                 with h5py.File(self.file_path, 'r') as f:
                     self.path_list = self._get_all_dataset_paths(f)
+            # 無ければログを出すだけ。作成が必要ならWriterを使う
             else:
                 print('ファイルが見つかりません。: ' + self.file_path)
+        # 拡張子が無効であれば例外を投げる
         else:
             raise ValueError(
                 f"ファイルパスが無効です。対応するHDFファイルでない可能性があります。\n\t有効なもの: {self.SUPPORTED_FILE_TYPES}"
@@ -29,9 +32,9 @@ class HDF5():
         return dataset_paths
 
 class HDF5Writer(HDF5):
-
     def __init__(self, file_path):
         super().__init__(file_path)
+        # ファイルが存在すればそれに紐づけ、無ければ新規作成する
         if not os.path.exists(file_path):
             self._create_file()
         else:
