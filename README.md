@@ -1,0 +1,1 @@
+![設計図](https://github.com/ishizawa2468/XRDSpotAnalyzer/blob/main/docs/diagram.svg)
