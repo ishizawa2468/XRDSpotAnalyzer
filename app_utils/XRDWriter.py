@@ -4,6 +4,7 @@ XRDに関するデータを一時的な.hdfに書き込むクラス
 Cakeデータ・Patternデータをはじめ、角度配列、frame配列など使いそうなデータを片っ端から保存する
 """
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 import h5py
 import numpy as np
@@ -83,18 +84,26 @@ class XRDWriter(HDF5Writer):
         to_cake_data = os.path.join(self.BASE_PATH, 'cake')
 
         with h5py.File(self.file_path, 'a') as f_append:
-            # 既存データが存在すれば削除する
             if to_cake_data in f_append:
                 del f_append[to_cake_data]
 
-            # cakeデータの保存領域を作っておく
             cake_dataset = f_append.create_dataset(
                 to_cake_data,
                 shape=(self.xrd.frame_num, self.xrd.npt_azi, self.xrd.npt_tth),
-                dtype=np.float32
+                dtype=np.float32,
             )
-            # 書き込み
-            # TODO streamlitでの進捗バー表示、threading処理
-            for frame in tqdm(range(self.xrd.frame_num)):
-                cake = self.xrd.get_caked_data(frame)
-                cake_dataset[frame, :] = cake
+
+            num_workers = min(8, os.cpu_count()-2)
+            frame_list = list(range(self.xrd.frame_num))
+
+            with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                list(tqdm(
+                    executor.map(lambda f: _write_cake_slice(cake_dataset, f, self.xrd), frame_list),
+                    total=len(frame_list),
+                    desc="Writing Cake Data"
+                ))
+
+def _write_cake_slice(cake_dataset, frame, xrd):
+    """ 1フレームのデータを取得してHDF5に書き込む """
+    cake = xrd.get_caked_data(frame)
+    cake_dataset[frame, :, :] = cake

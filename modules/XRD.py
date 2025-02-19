@@ -6,6 +6,7 @@ import numpy as np
 
 import h5py
 import pyFAI
+import pyopencl as cl
 from modules.HDF5 import HDF5Reader
 
 
@@ -26,6 +27,7 @@ class XRD:
         else:
             raise NotImplementedError('.nxs, .hdfのみが実装されています。')
         # 共通処理
+        self.gpu_available = self._check_opencl_support() # OpenCL が利用可能か確認。GPUを使えるか
         self.xrd_path = xrd_path # 保存しておく。他のメソッドで拡張子判断するときに使う
         self._create_integrator(poni_path) # AzimuthalIntegratorを作成する
         self.npt_tth = npt_tth
@@ -42,7 +44,7 @@ class XRD:
                 frame = 1
             with h5py.File(self.xrd_path, 'r') as f:
                 frame_data = f[os.path.join(self.data_path_to_detector, 'data')][frame, :, :]
-        else:
+        elif self.xrd_path.endswith('.hdf'):
             raise NotImplementedError('実装してください')
         return frame_data
 
@@ -134,7 +136,20 @@ class XRD:
             I, tth, azi = self.ai.integrate2d(frame_data,
                                               npt_rad=self.npt_tth,  # NOTE これはintegrate_1dと揃える
                                               npt_azim=self.npt_azi,
-                                              unit="2th_deg")
+                                              unit="2th_deg",
+                                              # method='ocl' if self.gpu_available else 'cython', # コメントアウトして
+                                              )
             return I
         except Exception as e:
             raise RuntimeError(f"Frame {frame} の 2D 積分中にエラーが発生しました: {str(e)}")
+
+    def _check_opencl_support(self):
+        """ OpenCL (GPU) が利用可能かチェック """
+        try:
+            platforms = cl.get_platforms()
+            if platforms:
+                print("OpenCL (GPU) 利用可能: ", [platform.name for platform in platforms])
+                return True
+        except Exception:
+            print("OpenCL (GPU) が見つかりません。CPU (cython) を使用します。")
+            return False
