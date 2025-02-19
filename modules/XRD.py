@@ -17,7 +17,7 @@ class XRD:
         # ファイル別に処理
         if xrd_path.endswith('.hdf'):
             self.hdf = HDF5Reader(xrd_path)
-            # TODO: 少なくともframe数は必要。.nxs と同じ用に self.frame_num を設定
+            # TODO: 少なくともframe数は必要。.nxs と同じに self.frame_num を設定
             raise NotImplementedError('実装中')
         elif xrd_path.endswith('.nxs'):
             self.nxs_path = xrd_path

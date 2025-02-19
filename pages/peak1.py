@@ -1,10 +1,12 @@
 import gc
+import os
 
 import streamlit as st
 from matplotlib import pyplot as plt
 from openpyxl.xml.functions import fromstring
 
 from app_utils import setting_handler
+from app_utils.Writer import XRDWriter, PeakWriter
 from app_utils.peak_handler import Peak
 from modules.HDF5 import HDF5Reader
 
@@ -87,7 +89,7 @@ with from_col:
     from_frame = st.number_input(
         label='From Frame',
         min_value = frame_arr.min(),
-        max_value = frame_arr.max(),
+        max_value = frame_arr.max()-1,
         value = peak.from_frame,
         step = 1
     )
@@ -109,7 +111,7 @@ with to_col:
     to_frame = st.number_input(
         label='To Frame',
         min_value = from_frame+1,
-        max_value = frame_arr.max(),
+        max_value = frame_arr.max()-1,
         value = peak.to_frame,
         step = 1
     )
@@ -122,11 +124,14 @@ peak = Peak().set_boundaries(
 if st.button('更新'):
     peak.save_to_json(peak_num=peak_num)
 
+st.divider() # --------------------------------------------------------------------------------------------------------#
+st.subheader("Peak 範囲の表示")
 # patternデータの表示
 pattern = cake_hdf.find_by(query='pattern')
 # パターンの必要な領域を切り取る
 selected_pattern = pattern[from_frame:to_frame, peak.from_tth_idx:peak.to_tth_idx]
-fig, ax = plt.subplots()
+st.write(selected_pattern.shape)
+fig, ax = plt.subplots(figsize=(10, 5))
 im = ax.imshow(selected_pattern.T, cmap='jet', aspect='auto', origin='lower',
                extent=[from_frame, to_frame, from_tth, to_tth])
 plt.colorbar(im, ax=ax, label='Intensity (a.u.)')
@@ -135,4 +140,40 @@ ax.set_ylabel('2θ (deg)')
 st.pyplot(fig)
 del fig
 
+if st.button('この範囲で再積算する'):
+    # ↑で設定された2θの範囲で、全frameのcake dataから再度積算を行う。
+    hdf_writer = PeakWriter(file_path=setting.setting_json['tmp_hdf_path'])
+    hdf_writer.write_re_integrate_peak_data(
+        peak=peak,
+        peak_num=peak_num,
+        frame_num=len(frame_arr)
+    )
+
 gc.collect()
+
+st.divider() # --------------------------------------------------------------------------------------------------------#
+st.subheader("再積算結果")
+#
+to_tth_query = os.path.join('peak', f'{peak_num}', 'tth')
+tth_pattern = cake_hdf.find_by(query=to_tth_query)[from_frame:to_frame]
+st.write(tth_pattern.shape)
+# 描画
+fig, ax = plt.subplots(figsize=(10, 5))
+im = ax.imshow(tth_pattern.T, cmap='jet', aspect='auto', origin='lower')
+plt.colorbar(im, ax=ax, label='Intensity (a.u.)')
+ax.set_xlabel('Time (frame)')
+ax.set_ylabel('2θ (deg)')
+st.pyplot(fig)
+del fig
+
+#
+to_azi_query = os.path.join('peak', f'{peak_num}', 'azi')
+azi_pattern = cake_hdf.find_by(query=to_azi_query)[from_frame:to_frame]
+# 描画
+fig, ax = plt.subplots()
+im = ax.imshow(azi_pattern.T, cmap='jet', aspect='auto', origin='lower')
+plt.colorbar(im, ax=ax, label='Intensity (a.u.)')
+ax.set_xlabel('Time (frame)')
+ax.set_ylabel('2θ (deg)')
+st.pyplot(fig)
+del fig

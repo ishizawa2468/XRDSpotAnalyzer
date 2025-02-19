@@ -3,6 +3,7 @@ import os
 import streamlit as st
 import numpy as np
 
+""" peak_numはメンバとして持たないので注意。その都度わたしてあげる必要がある。 """
 class Peak:
     path_to_json = os.path.join('app_utils', 'peaks.json')
 

@@ -1,9 +1,10 @@
 import gc
+import os
 
 import streamlit as st
 from matplotlib import pyplot as plt
 
-from app_utils.XRDWriter import XRDWriter
+from app_utils.Writer import XRDWriter
 from modules.HDF5 import HDF5Reader
 from modules.XRD import XRD
 from app_utils import setting_handler
@@ -74,6 +75,10 @@ gc.collect() # メモリを掃除
 st.divider() # --------------------------------------------------------------------------------------------------------#
 st.subheader('積算データの確認')
 
+if not os.path.exists(setting.setting_json['tmp_hdf_path']):
+    st.error(f'ファイルが見つかりません: {setting.setting_json['tmp_hdf_path']}')
+    st.stop()
+
 # ここからはtmp.hdfを参照しながらデータを描画する
 cake_hdf = HDF5Reader(setting.setting_json['tmp_hdf_path'])
 
@@ -113,8 +118,6 @@ ax.set_ylabel('Azimuth (deg)')
 ax.set_title(f'Frame = {frame}')
 st.pyplot(fig)
 del fig
-
-
 
 
 
